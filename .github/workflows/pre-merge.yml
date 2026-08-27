@@ -5,8 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  SMART_TESTS_ORGANIZATION: "launchable-demo"
-  SMART_TESTS_WORKSPACE: "hands-on-lab"
+  SMART_TESTS_TOKEN: "${{ secrets.SMART_TESTS_TOKEN }}"
 
 jobs:
   PreMergeTest:
@@ -17,7 +16,19 @@ jobs:
         with:
           java-version: 21
           distribution: "adopt"
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install Smart Tests CLI
+        run: pip install smart-tests-cli
       - name: Compile
         run: mvn compile
+      - name: Smart Tests Subset
+        run: |
+          smart-tests verify
+          smart-tests subset maven --from-github-actions --target 20% src/test/java > subset.txt
       - name: Test
-        run: mvn test
+        run: mvn test -Dtest=$(cat subset.txt)
+      - name: Store Test Results for Smart Tests
+        if: always()
+        uses: cloudbees-oss/smart-tests-results-upload-action@v1
