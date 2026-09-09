@@ -26,7 +26,7 @@ jobs:
       - name: Smart Tests Subset
         run: |
           smart-tests verify
-          smart-tests subset maven --from-github-actions --target 20% src/main/java > subset.txt
+          smart-tests subset maven --from-github-actions --target 20% src/test/java > subset.txt
       - name: Test
         run: mvn test -Dtest=$(cat subset.txt)
       - name: Store Test Results for Smart Tests
