@@ -32,12 +32,11 @@ jobs:
       - name: Record session
         run: smart-tests record session --build "$BUILD_NAME" --test-suite unit --observation > session.txt
       - name: Compile
-        run: mvn test-compile
+        run: mvn compile
       - name: Subset
-        run: smart-tests subset maven --session @session.txt --confidence 90% --test-compile-created-file <(find . -path '*/target/maven-status/maven-compiler-plugin/testCompile/default-testCompile/createdFiles.lst' -exec cat {} \;) > subset.txt
-        shell: bash
+        run: smart-tests subset --get-tests-from-previous-sessions --output-exclusion-rules maven --session @session.txt --confidence 90% > subset.txt
       - name: Test
-        run: mvn test -Dsurefire.includesFile=$PWD/subset.txt
+        run: mvn test -Dsurefire.excludesFile=$PWD/subset.txt
       - name: Record tests
         if: always()
         run: smart-tests record tests maven --session @session.txt "./**/target/surefire-reports"
