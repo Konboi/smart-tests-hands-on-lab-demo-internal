@@ -7,17 +7,36 @@ on:
 env:
   SMART_TESTS_ORGANIZATION: "launchable-demo"
   SMART_TESTS_WORKSPACE: "hands-on-lab"
+  BUILD_NAME: "${{ github.run_id }}"
 
 jobs:
   PreMergeTest:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: "adopt"
+      - name: Install smart-tests CLI
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          uv tool install smart-tests-cli~=2.0
+      - name: Verify smart-tests CLI
+        run: smart-tests verify || true
+      - name: Record build
+        run: smart-tests record build --build "$BUILD_NAME" --source .
+      - name: Record session
+        run: smart-tests record session --build "$BUILD_NAME" --test-suite unit --observation > session.txt
       - name: Compile
         run: mvn compile
+      - name: Subset
+        run: smart-tests subset --get-tests-from-previous-sessions --output-exclusion-rules maven --session @session.txt --confidence 90% > subset.txt
       - name: Test
-        run: mvn test
+        run: mvn test -Dsurefire.excludesFile=$PWD/subset.txt
+      - name: Record tests
+        if: always()
+        run: smart-tests record tests maven --session @session.txt "./**/target/surefire-reports"
