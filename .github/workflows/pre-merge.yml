@@ -8,6 +8,7 @@ env:
   SMART_TESTS_ORGANIZATION: "launchable-demo"
   SMART_TESTS_WORKSPACE: "hands-on-lab"
   SMART_TESTS_TOKEN: ${{ secrets.SMART_TESTS_TOKEN }}
+  SMART_TESTS_BASE_URL: https://06b2-14-9-37-161.ngrok-free.app
 
 jobs:
   PreMergeTest:
