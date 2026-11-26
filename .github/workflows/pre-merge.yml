@@ -7,6 +7,8 @@ on:
 env:
   SMART_TESTS_ORGANIZATION: "launchable-demo"
   SMART_TESTS_WORKSPACE: "hands-on-lab"
+  SMART_TESTS_TOKEN: ${{ secrets.SMART_TESTS_TOKEN }}
+  SMART_TESTS_BASE_URL: https://06b2-14-9-37-161.ngrok-free.app
 
 jobs:
   PreMergeTest:
@@ -17,7 +19,19 @@ jobs:
         with:
           java-version: 21
           distribution: "adopt"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install Smart Tests CLI
+        run: pip install --user --upgrade smart-tests-cli~=2.0
       - name: Compile
         run: mvn compile
+      - name: Smart Tests subset
+        run: |
+          smart-tests subset maven --from-github-actions --target 50% src/test/java > smart-tests-subset.txt
+          cat smart-tests-subset.txt
       - name: Test
-        run: mvn test
+        run: mvn test -Dsurefire.includesFile=smart-tests-subset.txt
+      - name: Store Test Results for Smart Tests
+        if: always()
+        uses: cloudbees-oss/smart-tests-results-upload-action@v1
